@@ -2,16 +2,18 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="Super Mario Bros Deluxe", page_icon="🍄", layout="centered"
+    page_title="Super Mario Bros Deluxe with Real Sprite",
+    page_icon="🍄",
+    layout="centered",
 )
 
-st.title("🍄 Super Mario Bros - Deluxe Edition")
+st.title("🍄 Super Mario Bros - Hình Ảnh Thực Tế")
 st.caption(
     "🎮 **Điều khiển:** Dùng phím **A/D** hoặc **Mũi tên Trái/Phải** để di"
     " chuyển, **Space / W / Mũi tên Lên** để nhảy!"
 )
 
-# Mã HTML/JS Canvas Nâng Cấp Đồ Họa & Bảng Game Over
+# Mã HTML/JS Canvas tích hợp hình ảnh Mario thực tế
 mario_game_code = """
 <!DOCTYPE html>
 <html>
@@ -109,9 +111,15 @@ mario_game_code = """
         let isGameOver = false;
         let score = 0;
 
+        // Tải hình ảnh Mario thực tế từ link trực tuyến chất lượng cao
+        const marioImg = new Image();
+        marioImg.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png"; 
+        // Hoặc dùng link ảnh Mario chuẩn trực tiếp:
+        marioImg.src = "https://upload.wikimedia.org/wikipedia/en/a/a9/Mario_%28New_Super_Mario_Bros.%29.png";
+
         // Trạng thái nhân vật Mario
         let mario = {
-            x: 50, y: 220, width: 28, height: 36,
+            x: 50, y: 215, width: 36, height: 45,
             dx: 0, dy: 0, speed: 4.5, gravity: 0.45,
             jumpPower: -10, grounded: false, facingRight: true
         };
@@ -139,7 +147,7 @@ mario_game_code = """
 
         function resetGame() {
             mario.x = 50;
-            mario.y = 220;
+            mario.y = 215;
             mario.dy = 0;
             goomba.x = 400;
             goomba.dir = -1;
@@ -183,7 +191,6 @@ mario_game_code = """
 
             if (mario.y + mario.height >= groundY) {
                 if (overPit) {
-                    // Rơi xuống hố
                     if (mario.y > canvas.height) {
                         triggerGameOver();
                     }
@@ -226,58 +233,17 @@ mario_game_code = """
             gameOverScreen.style.display = "flex";
         }
 
-        /* --- VẼ ĐỒ HOẠ GAME CHẤT LƯỢNG CAO --- */
-        function drawMario(x, y, facingRight) {
-            ctx.save();
-            // Nón đỏ
-            ctx.fillStyle = "#e52521";
-            ctx.fillRect(x + 4, y, 20, 8);
-            ctx.fillRect(x + 8, y - 4, 12, 4);
-
-            // Khuôn mặt
-            ctx.fillStyle = "#fcc082";
-            ctx.fillRect(x + 4, y + 8, 20, 10);
-            
-            // Mắt & Râu
-            ctx.fillStyle = "#000";
-            const eyeX = facingRight ? x + 18 : x + 6;
-            ctx.fillRect(eyeX, y + 10, 3, 4);
-            ctx.fillRect(x + 4, y + 15, 20, 3); // Râu
-
-            // Áo đỏ
-            ctx.fillStyle = "#e52521";
-            ctx.fillRect(x + 4, y + 18, 20, 8);
-
-            // Quần yếm xanh dương
-            ctx.fillStyle = "#002490";
-            ctx.fillRect(x + 6, y + 22, 16, 10);
-            
-            // Khuy quần vàng
-            ctx.fillStyle = "#fbd000";
-            ctx.fillRect(x + 8, y + 24, 3, 3);
-            ctx.fillRect(x + 17, y + 24, 3, 3);
-
-            // Giày nâu
-            ctx.fillStyle = "#8b4513";
-            ctx.fillRect(x + 2, y + 32, 11, 4);
-            ctx.fillRect(x + 15, y + 32, 11, 4);
-            ctx.restore();
-        }
-
         function drawGoomba(x, y) {
-            // Nấm Goomba Nâu
             ctx.fillStyle = "#8b4513";
             ctx.beginPath();
             ctx.arc(x + 13, y + 10, 13, Math.PI, 0);
             ctx.fill();
             ctx.fillRect(x + 3, y + 10, 20, 10);
 
-            // Chân
             ctx.fillStyle = "#000";
             ctx.fillRect(x + 1, y + 20, 8, 6);
             ctx.fillRect(x + 17, y + 20, 8, 6);
 
-            // Mắt
             ctx.fillStyle = "#fff";
             ctx.fillRect(x + 5, y + 8, 5, 8);
             ctx.fillRect(x + 16, y + 8, 5, 8);
@@ -300,11 +266,11 @@ mario_game_code = """
             ctx.fillStyle = "#000"; ctx.font = "bold 16px sans-serif"; ctx.fillText("?", 188, 240);
 
             // 3. Vẽ Mặt đất & Hố
-            ctx.fillStyle = "#00a800"; // Lớp cỏ xanh
+            ctx.fillStyle = "#00a800";
             ctx.fillRect(0, 312, pit.x, 10);
             ctx.fillRect(pit.x + pit.width, 312, canvas.width - (pit.x + pit.width), 10);
 
-            ctx.fillStyle = "#c84c0c"; // Đất nâu
+            ctx.fillStyle = "#c84c0c";
             ctx.fillRect(0, 322, pit.x, 58);
             ctx.fillRect(pit.x + pit.width, 322, canvas.width - (pit.x + pit.width), 58);
 
@@ -320,11 +286,20 @@ mario_game_code = """
                 }
             });
 
-            // 5. Vẽ Nhân vật & Quái vật
-            drawMario(mario.x, mario.y, mario.facingRight);
+            // 5. Vẽ Nhân vật Mario bằng hình ảnh thực tế
+            ctx.save();
+            if (!mario.facingRight) {
+                ctx.scale(-1, 1);
+                ctx.drawImage(marioImg, -mario.x - mario.width, mario.y, mario.width, mario.height);
+            } else {
+                ctx.drawImage(marioImg, mario.x, mario.y, mario.width, mario.height);
+            }
+            ctx.restore();
+
+            // 6. Vẽ Quái vật
             drawGoomba(goomba.x, goomba.y);
 
-            // 6. Bảng điểm
+            // 7. Bảng điểm
             ctx.fillStyle = "#fff";
             ctx.font = "bold 16px 'Segoe UI', sans-serif";
             ctx.fillText("💰 ĐIỂM: " + score, 20, 35);
@@ -338,7 +313,14 @@ mario_game_code = """
             }
         }
 
-        loop();
+        // Đợi ảnh tải xong rồi chạy game
+        marioImg.onload = function() {
+            loop();
+        };
+        // Phòng hờ nếu ảnh tải nhanh hoặc cache sẵn
+        if(marioImg.complete) {
+            loop();
+        }
     </script>
 </body>
 </html>
